@@ -1,5 +1,55 @@
 using XLSX
 using DataFrames
+using JuMP
+using Gurobi
+
+function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
+
+    #------
+    # MODEL
+    #------
+
+    # n = facilities = j 
+    # m = customers = i
+
+    model = Model(Gurobi.Optimizer);
+
+    @variable(model, x[1:n] >= 0, Bin);
+    @variable(model, y[1:m,1:n] >= 0);
+
+    @objective(model, Min, 
+        sum(f_opening_costs[j]*x[j] for j in 1:n) + 
+        sum(f_closing_costs[j]*(1-x[j]) for j in 1:n) + 
+        sum(sum(h[i]*c[i,j]*y[i,j] for j in 1:n) for i = 1:m)  
+        );
+
+    @constraint(model,[i = 1:m], sum(y[i,j] for j in 1:n) == 1);
+    @constraint(model,[i = 1:m, j = 1:n], y[i,j] <= x[j]);
+    @constraint(model,[j = 1:n], sum(h[i]*y[i,j] for i in 1:m) <= capacity[j]);
+
+    #-------
+    # SOLVE
+    #-------
+
+    optimize!(model)
+
+    # Print the optimal objective value
+    println("Optimal Objective Value: ", objective_value(model))
+
+    # Print which facilities are open
+    for j = 1:n
+        if value(x[j]) > 0.5
+            println("Facility ", j, " is open")
+        end
+    end
+
+    # Print capacity usage at facilities
+    for j = 1:n
+        println("Facility ", j , " usage: ", sum(value(y[i, j]) for i = 1:m), "/", facility_cap[j])
+    end
+
+    
+end
 
 # Read data from Excel file
 xf = XLSX.readxlsx("facilityData.xlsx")
@@ -125,69 +175,18 @@ capacity = facility_data.capacity
 h = customers_data.visits
 
 # numer of customers 
-n = length(customers_data.customer)
+m = length(customers_data.customer)
 # number of facilities_data
-m = length(facility_data.facility)
+n = length(facility_data.facility)
 
 
-
-function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
-
-    #------
-    # MODEL
-    #------
-
-
-    model = Model(Gurobi.Optimizer);
-
-    @variable(model, x[1:n] >= 0, Bin);
-    @variable(model, y[1:n,1:m] >= 0);
-
-    @objective(model, Min, 
-        sum(f_opening_costs[j]*x[j] for j in 1:n) + 
-        sum(f_closing_costs[j]*(1-x[j]) for j in 1:n) + 
-        sum(sum(h[i]*c[i,j]*y[i,j] for j in 1:n) for i = 1:m)  
-        );
-
-    @constraint(model,[i = 1:m], sum(y[i,j] for j in 1:n) == 1);
-    @constraint(model,[i = 1:m, j = 1:n], y[i,j] <= x[j]);
-    @constraint(model,[i = 1:m, j = 1:n], sum(h[i]*y[i,j]) <= capacity[j]);
-
-    #-------
-    # SOLVE
-    #-------
-
-    optimize!(model)
-
-    println();
-    println("Opened Facilities:")
-    for j = 1:n
-        if (value(x[j]) == 1)
-            println("facility ",j);
-        end
-    end
-
-    println();
-    println("Assignments");
-    for i = 1:m
-        for j = 1:n
-            if (value(y[i,j]) > 0.000001)
-                if (value(y[i,j]) == 1)
-                    println("Customer $i is assigned to facility $j")
-                else
-                    println("A fraction of $(value(y[i,j])) of the demand of customer $i is assigned to facility $j")
-                end
-            end
-        end
-    end
-
-    
-end
-
-
-
-using JuMP
-using Gurobi
+println(size(c))
+println(size(f_closing_costs))
+println(size(f_opening_costs))
+println(size(capacity))
+println(size(h))
+println(n)
+println(m)
 
 solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
 
