@@ -70,3 +70,45 @@ customers_data = Customer_data(xf, "Customers")
 
 facility_data = facilities_data(xf, "Fac")
 
+
+# Function to calculate the Haversine distance between two points
+function haversine_distance(lat1, lon1, lat2, lon2)
+    # Radius of the Earth in kilometers
+    R = 6371.0
+    
+    # Convert latitude and longitude from degrees to radians
+    alfa1 = deg2rad(lat1)
+    alfa2 = deg2rad(lat2)
+    delta_alfa = deg2rad(lat2 - lat1)
+    delta_beta = deg2rad(lon2 - lon1)
+    
+    # Haversine formula
+    a = sin(delta_alfa/2)^2 + cos(alfa1) * cos(alfa2) * sin(delta_beta/2)^2
+    c = 2 * atan(sqrt(a), sqrt(1-a))
+    d = R * c  # Distance in kilometers
+    
+    return d
+end
+
+# Function to create distance matrix
+function distance_matrix(customers_data, facility_data)
+    n_customers = size(customers_data, 1)
+    n_facilities = size(facility_data, 1)
+    
+    distance_mat = zeros(n_customers, n_facilities)
+    
+    for i in 1:n_customers
+        for j in 1:n_facilities
+            distance_mat[i, j] = haversine_distance(customers_data[i, :latitude], customers_data[i, :longitude],
+                                                     facility_data[j, :latitude], facility_data[j, :longitude])
+        end
+    end
+    
+    return distance_mat
+end
+
+
+distance_mat = distance_matrix(customers_data, facility_data)
+println(size(distance_mat))
+
+
