@@ -43,10 +43,10 @@ function solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_cost
         end
     end
 
-    # Print capacity usage at facilities
-    for j = 1:n
-        println("Facility ", j , " usage: ", sum(value(h[i,s]*y[i, j, s]) for i = 1:m, s = 1:S), "/", (capacity[j,s] for s = 1:S))
-    end
+    # # Print capacity usage at facilities
+    # for j = 1:n
+    #     println("Facility ", j , " usage: ", sum(value(h[i,s]*y[i, j, s]) for i = 1:m, s = 1:S), "/", (capacity[j,s] for s = 1:S))
+    # end
 
     
 end
