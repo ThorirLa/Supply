@@ -45,7 +45,7 @@ function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capaci
 
     # Print capacity usage at facilities
     for j = 1:n
-        println("Facility ", j , " usage: ", sum(value(h[i]*y[i, j]) for i = 1:m), "/", facility_cap[j])
+        println("Facility ", j , " usage: ", sum(value(h[i]*y[i, j]) for i = 1:m), "/", capacity[j])
     end
 
     
@@ -184,3 +184,28 @@ solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
 
 
 
+using PyPlot
+
+# Function to plot facilities on a map
+function plot_facilities_on_map(facility_data, opened_facilities)
+    figure()
+    scatter(facility_data.longitude, facility_data.latitude, label="Not operating facilities")
+    scatter(facility_data.longitude[opened_facilities], facility_data.latitude[opened_facilities], color="red", label="Opened Facilities")
+    xlabel("Longitude")
+    ylabel("Latitude")
+    title("Visualization of the Facilities")
+    legend()
+    grid(true)
+    
+    # Annotate opened facilities with their indices
+    for i in opened_facilities
+        annotate(string(i), xy=(facility_data.longitude[i], facility_data.latitude[i]), xytext=(3,3), textcoords="offset points")
+    end
+    
+    # Save the plot as an image file
+    savefig("opened_facilities_map.png")
+end
+
+# Example usage
+opened_facilities = [1, 2, 3, 8, 10]  # Assuming these are the indices of the opened facilities
+plot_facilities_on_map(facility_data, opened_facilities)
