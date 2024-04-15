@@ -2,6 +2,9 @@ using XLSX
 using DataFrames
 using JuMP
 using Gurobi
+using Plots
+using PyPlot
+
 
 function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
 
@@ -48,6 +51,7 @@ function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capaci
         println("Facility ", j , " usage: ", sum(value(h[i]*y[i, j]) for i = 1:m), "/", capacity[j])
     end
 
+    return JuMP.value.(y)
     
 end
 
@@ -181,13 +185,11 @@ m = length(customers_data.customer)
 n = length(facility_data.facility)
 
 
-solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
+y = solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
 
 
 
-using PyPlot
-
-# Function to plot facilities on a map
+#= # Function to plot facilities on a map
 function plot_facilities_on_map(facility_data, opened_facilities)
     figure()
     scatter(facility_data.longitude, facility_data.latitude, label="Not operating facilities")
@@ -205,8 +207,46 @@ function plot_facilities_on_map(facility_data, opened_facilities)
     
     # Save the plot as an image file
     savefig("opened_facilities_map.png")
+end 
+
+plot_facilities_on_map(facility_data, opened_facilities)
+
+=#
+
+
+using PyPlot
+
+# Function to plot facilities and their connections to customers
+function plot_facilities_connections(facility_data, opened_facilities, customer_data, y)
+    # Initialize the PyPlot figure
+    figure()
+    # Plot all facilities
+    scatter(facility_data.longitude, facility_data.latitude, label="Facilities", color="blue", alpha=0.5)
+    scatter(facility_data.longitude[opened_facilities], facility_data.latitude[opened_facilities], color="red", label="Opened Facilities")
+
+    # Draw connections from each customer to the assigned opened facility
+    for i in 1:size(customer_data, 1)
+        for j in opened_facilities
+            if y[i,j] > 0.5  # This assumes y[i,j] is the decision variable for customer i to facility j
+                plot([customer_data.longitude[i], facility_data.longitude[j]], [customer_data.latitude[i], facility_data.latitude[j]], "k-")
+            end
+        end
+    end
+
+    # Label axes and show legend
+    xlabel("Longitude")
+    ylabel("Latitude")
+    title("Visualization of Facilities and Customer Connections")
+    legend()
+    grid(true)
+
+    # Save the plot as an image file
+    savefig("facilities_connections.png")
 end
+
+
+
 
 # Example usage
 opened_facilities = [1, 2, 3, 8, 10]  # Assuming these are the indices of the opened facilities
-plot_facilities_on_map(facility_data, opened_facilities)
+plot_facilities_connections(facility_data, opened_facilities, customers_data, y)

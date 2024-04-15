@@ -2,6 +2,9 @@ using XLSX
 using DataFrames
 using JuMP
 using Gurobi
+using Plots
+using PyPlot
+
 
 function solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, capacity, h, S, q)
 
@@ -48,6 +51,7 @@ function solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_cost
     #     println("Facility ", j , " usage: ", sum(value(h[i,s]*y[i, j, s]) for i = 1:m, s = 1:S), "/", (capacity[j,s] for s = 1:S))
     # end
 
+    return JuMP.value.(y)
     
 end
 
@@ -201,32 +205,41 @@ S = 30
 
 q = fill(1/30,1,30)
 
-solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, facility_capacities_scenarios, customer_demands_scenarios,S,q)
+y = solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, facility_capacities_scenarios, customer_demands_scenarios,S,q)
 
 
 
-# using PyPlot
+pyplot()  # This sets PyPlot as the backend for Plots
 
-# Function to plot facilities on a map
-# function plot_facilities_on_map(facility_data, opened_facilities)
-#     figure()
-#     scatter(facility_data.longitude, facility_data.latitude, label="Not operating facilities")
-#     scatter(facility_data.longitude[opened_facilities], facility_data.latitude[opened_facilities], color="red", label="Opened Facilities")
-#     xlabel("Longitude")
-#     ylabel("Latitude")
-#     title("Visualization of the Facilities")
-#     legend()
-#     grid(true)
-    
-#     # Annotate opened facilities with their indices
-#     for i in opened_facilities
-#         annotate(string(i), xy=(facility_data.longitude[i], facility_data.latitude[i]), xytext=(3,3), textcoords="offset points")
-#     end
-    
-#     # Save the plot as an image file
-#     savefig("opened_facilities_mapQ5.png")
-# end
+function plot_facilities_scenarios(facility_data, customer_data, y)
+    plt = plot(legend = :topleft)
 
-# Example usage
-# opened_facilities = [1, 2, 3, 8, 10]  # Assuming these are the indices of the opened facilities
-# plot_facilities_on_map(facility_data, opened_facilities)
+    # Plot all facilities
+    scatter!(facility_data[:longitude], facility_data[:latitude], label="Facilities", color="red")
+
+    # Plot open facilities
+    opened_facilities = [1,2,3,4,8]
+    scatter!(facility_data[:longitude][opened_facilities], facility_data[:latitude][opened_facilities], label="Opened Facilities", color="green")
+
+    # Plot connections
+    for i in 1:size(customer_data, 1)
+        for j in opened_facilities
+            # Assuming y[i,j] is your variable indicating whether customer i is assigned to facility j
+            if value(y[i,j]) > 0.5
+                plot!([facility_data[:longitude][j], customer_data[:longitude][i]], [facility_data[:latitude][j], customer_data[:latitude][i]], line=(:black))
+            end
+        end
+    end
+
+    xlabel!("Longitude")
+    ylabel!("Latitude")
+    title!("Visualization of the Facilities with the Scenarios")
+    display(plt)  # This will display the plot in a GUI window
+
+    # Save the plot as an image file
+    savefig("facilities_map_scenarios.png")
+end
+
+
+# Once you have the y_solution, you can call the plot function
+plot_facilities_scenarios(facility_data, customer_data, y)
