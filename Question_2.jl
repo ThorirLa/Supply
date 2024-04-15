@@ -109,6 +109,7 @@ end
 
 
 distance_mat = distance_matrix(customers_data, facility_data)
-println(size(distance_mat))
+println(distance_mat)
+
 
 
