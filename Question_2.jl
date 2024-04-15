@@ -45,7 +45,7 @@ function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capaci
 
     # Print capacity usage at facilities
     for j = 1:n
-        println("Facility ", j , " usage: ", sum(value(y[i, j]) for i = 1:m), "/", facility_cap[j])
+        println("Facility ", j , " usage: ", sum(value(h[i]*y[i, j]) for i = 1:m), "/", facility_cap[j])
     end
 
     
@@ -179,14 +179,6 @@ m = length(customers_data.customer)
 # number of facilities_data
 n = length(facility_data.facility)
 
-
-println(size(c))
-println(size(f_closing_costs))
-println(size(f_opening_costs))
-println(size(capacity))
-println(size(h))
-println(n)
-println(m)
 
 solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
 
