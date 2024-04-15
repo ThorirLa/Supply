@@ -3,7 +3,7 @@ using DataFrames
 using JuMP
 using Gurobi
 
-function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h, S, q)
+function solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, capacity, h, S, q)
 
     #------
     # MODEL
@@ -25,7 +25,7 @@ function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capaci
 
     @constraint(model,[i = 1:m, s = 1:S], sum(y[i,j,s] for j in 1:n) == 1);
     @constraint(model,[i = 1:m, j = 1:n, s = 1:S], y[i,j,s] <= x[j]);
-    @constraint(model,[j = 1:n, s = 1:S], sum(h[i,s]*y[i,j,s] for i in 1:m) <= capacity[j]);
+    @constraint(model,[j = 1:n, s = 1:S], sum(h[i,s]*y[i,j,s] for i in 1:m) <= capacity[j,s]);
 
     #-------
     # SOLVE
@@ -45,7 +45,7 @@ function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capaci
 
     # Print capacity usage at facilities
     for j = 1:n
-        println("Facility ", j , " usage: ", sum(value(h[i,s]*y[i, j, s]) for i = 1:m, s = 1:S), "/", capacity[j])
+        println("Facility ", j , " usage: ", sum(value(h[i,s]*y[i, j, s]) for i = 1:m, s = 1:S), "/", (capacity[j,s] for s = 1:S))
     end
 
     
@@ -179,8 +179,29 @@ m = length(customers_data.customer)
 # number of facilities_data
 n = length(facility_data.facility)
 
+# Extract the data from the worksheet
+customer_demands_data = XLSX.readtable("facilityData.xlsx", "CustomerDemands")
+facility_capacities_data = XLSX.readtable("facilityData.xlsx", "FacilityCapacities")
 
-solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
+# Convert the extracted data to a DataFrame
+customer_demands_df = DataFrame(customer_demands_data)
+facility_capacities_df = DataFrame(facility_capacities_data)
+
+# Get the customer demands scenarios columns
+cust_scenarios = names(customer_demands_df)[2:end]
+# Get the customer demands scenarios columns
+fac_scenarios= names(facility_capacities_df)[2:end]
+
+
+# Select only the scenario columns
+customer_demands_scenarios = customer_demands_df[:, cust_scenarios]
+facility_capacities_scenarios = facility_capacities_df[:, fac_scenarios]
+
+S = 30
+
+q = fill(1/30,1,30)
+
+solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, facility_capacities_scenarios, customer_demands_scenarios,S,q)
 
 
 
