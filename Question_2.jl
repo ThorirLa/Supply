@@ -53,15 +53,17 @@ function facilities_data(xf, sheet_name)
 
     col = 4
     closing_cost = read_column(sheet, firstrow, col)
-    
+
     col = 5
+    opening_cost = read_column(sheet, firstrow, col)
+    
+    col = 6
     capacity = read_column(sheet, firstrow, col)
 
-    col = 6
+    col = 7
     type = read_column(sheet, firstrow, col)
 
-    rawdata = DataFrame(facility = facility, latitude = latitude, 
-            longitude = longitude, closing_cost = closing_cost, capacity = capacity, type = type)
+    rawdata = DataFrame(facility = facility, latitude = latitude, longitude = longitude, closing_cost = closing_cost, opening_cost = opening_cost, capacity = capacity, type = type)
     return rawdata
 end
 
@@ -109,7 +111,85 @@ end
 
 
 distance_mat = distance_matrix(customers_data, facility_data)
-println(distance_mat)
+
+c = distance_mat*10
+
+
+# Extract closing costs and opening costs 
+f_closing_costs = facility_data.closing_cost
+f_opening_costs = facility_data.opening_cost
+
+# Extract the capacity
+capacity = facility_data.capacity
+
+h = customers_data.visits
+
+# numer of customers 
+n = length(customers_data.customer)
+# number of facilities_data
+m = length(facility_data.facility)
+
+
+
+function solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
+
+    #------
+    # MODEL
+    #------
+
+
+    model = Model(Gurobi.Optimizer);
+
+    @variable(model, x[1:n] >= 0, Bin);
+    @variable(model, y[1:n,1:m] >= 0);
+
+    @objective(model, Min, 
+        sum(f_opening_costs[j]*x[j] for j in 1:n) + 
+        sum(f_closing_costs[j]*(1-x[j]) for j in 1:n) + 
+        sum(sum(h[i]*c[i,j]*y[i,j] for j in 1:n) for i = 1:m)  
+        );
+
+    @constraint(model,[i = 1:m], sum(y[i,j] for j in 1:n) == 1);
+    @constraint(model,[i = 1:m, j = 1:n], y[i,j] <= x[j]);
+    @constraint(model,[i = 1:m, j = 1:n], sum(h[i]*y[i,j]) <= capacity[j]);
+
+    #-------
+    # SOLVE
+    #-------
+
+    optimize!(model)
+
+    println();
+    println("Opened Facilities:")
+    for j = 1:n
+        if (value(x[j]) == 1)
+            println("facility ",j);
+        end
+    end
+
+    println();
+    println("Assignments");
+    for i = 1:m
+        for j = 1:n
+            if (value(y[i,j]) > 0.000001)
+                if (value(y[i,j]) == 1)
+                    println("Customer $i is assigned to facility $j")
+                else
+                    println("A fraction of $(value(y[i,j])) of the demand of customer $i is assigned to facility $j")
+                end
+            end
+        end
+    end
+
+    
+end
+
+
+
+using JuMP
+using Gurobi
+
+solve_facility_location(n,m,c, f_closing_costs, f_opening_costs, capacity, h)
 
 
 
