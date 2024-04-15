@@ -21,7 +21,9 @@ fac_scenarios= names(facility_capacities_df)[2:end]
 
 # Select only the scenario columns
 customer_demands_scenarios = customer_demands_df[:, cust_scenarios]
-facility_capacities_scenarios = customer_demands_df[:, fac_scenarios]
+facility_capacities_scenarios = facility_capacities_df[:, fac_scenarios]
+
+
 
 
 
