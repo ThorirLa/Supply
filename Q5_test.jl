@@ -200,7 +200,8 @@ fac_scenarios= names(facility_capacities_df)[2:end]
 customer_demands_scenarios = customer_demands_df[:, cust_scenarios]
 facility_capacities_scenarios = facility_capacities_df[:, fac_scenarios]
 
-S = 30
+
+S = length(cust_scenarios)
 
 q = fill(1/30,1,30)
 
