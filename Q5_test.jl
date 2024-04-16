@@ -3,6 +3,8 @@ using DataFrames
 using JuMP
 using Gurobi
 
+
+
 function solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, capacity, h, S, q)
 
     #------
@@ -48,6 +50,7 @@ function solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_cost
     #     println("Facility ", j , " usage: ", sum(value(h[i,s]*y[i, j, s]) for i = 1:m, s = 1:S), "/", (capacity[j,s] for s = 1:S))
     # end
 
+    return JuMP.value.(y)
     
 end
 
@@ -201,32 +204,35 @@ S = 30
 
 q = fill(1/30,1,30)
 
-solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, facility_capacities_scenarios, customer_demands_scenarios,S,q)
+y = solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, facility_capacities_scenarios, customer_demands_scenarios,S,q)
+opened_facilities = [1,2,3,4,8]
+
+using PyPlot
+
+# Function to plot facilities and their connections to customers
+function plot_facilities_connections(facility_data, opened_facilities)
+    # Initialize the PyPlot figure
+    figure()
+
+    # Plot all facilities
+    scatter(facility_data.longitude, facility_data.latitude, label="Facilities", color="blue", alpha=1)
+    scatter(facility_data.longitude[opened_facilities], facility_data.latitude[opened_facilities], color="red", label="Opened Facilities", alpha=1)
 
 
+     # Add data labels for facilities
+    for (index, facility) in enumerate(facility_data.facility)
+        text(facility_data.longitude[index], facility_data.latitude[index], facility, fontsize=8, ha="left", va="bottom")
+    end
 
-# using PyPlot
+    # Label axes and show legend
+    xlabel("Longitude")
+    ylabel("Latitude")
+    title("Visualization of Facilities")
+    legend()
 
-# Function to plot facilities on a map
-# function plot_facilities_on_map(facility_data, opened_facilities)
-#     figure()
-#     scatter(facility_data.longitude, facility_data.latitude, label="Not operating facilities")
-#     scatter(facility_data.longitude[opened_facilities], facility_data.latitude[opened_facilities], color="red", label="Opened Facilities")
-#     xlabel("Longitude")
-#     ylabel("Latitude")
-#     title("Visualization of the Facilities")
-#     legend()
-#     grid(true)
-    
-#     # Annotate opened facilities with their indices
-#     for i in opened_facilities
-#         annotate(string(i), xy=(facility_data.longitude[i], facility_data.latitude[i]), xytext=(3,3), textcoords="offset points")
-#     end
-    
-#     # Save the plot as an image file
-#     savefig("opened_facilities_mapQ5.png")
-# end
+    # Save the plot as an image file
+    savefig("facilities_connections_scenarios.png")
+end
 
 # Example usage
-# opened_facilities = [1, 2, 3, 8, 10]  # Assuming these are the indices of the opened facilities
-# plot_facilities_on_map(facility_data, opened_facilities)
+plot_facilities_connections(facility_data, opened_facilities)
