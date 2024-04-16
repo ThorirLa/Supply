@@ -209,37 +209,37 @@ y = solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, fa
 
 
 
-pyplot()  # This sets PyPlot as the backend for Plots
+# pyplot()  # This sets PyPlot as the backend for Plots
 
-function plot_facilities_scenarios(facility_data, customer_data, y)
-    plt = plot(legend = :topleft)
+# function plot_facilities_scenarios(facility_data, customer_data, y)
+#     plt = plot(legend = :topleft)
 
-    # Plot all facilities
-    scatter!(facility_data[:longitude], facility_data[:latitude], label="Facilities", color="red")
+#     # Plot all facilities
+#     scatter!(facility_data[:longitude], facility_data[:latitude], label="Facilities", color="red")
 
-    # Plot open facilities
-    opened_facilities = [1,2,3,4,8]
-    scatter!(facility_data[:longitude][opened_facilities], facility_data[:latitude][opened_facilities], label="Opened Facilities", color="green")
+#     # Plot open facilities
+#     opened_facilities = [1,2,3,4,8]
+#     scatter!(facility_data[:longitude][opened_facilities], facility_data[:latitude][opened_facilities], label="Opened Facilities", color="green")
 
-    # Plot connections
-    for i in 1:size(customer_data, 1)
-        for j in opened_facilities
-            # Assuming y[i,j] is your variable indicating whether customer i is assigned to facility j
-            if value(y[i,j]) > 0.5
-                plot!([facility_data[:longitude][j], customer_data[:longitude][i]], [facility_data[:latitude][j], customer_data[:latitude][i]], line=(:black))
-            end
-        end
-    end
+#     # Plot connections
+#     for i in 1:size(customer_data, 1)
+#         for j in opened_facilities
+#             # Assuming y[i,j] is your variable indicating whether customer i is assigned to facility j
+#             if value(y[i,j]) > 0.5
+#                 plot!([facility_data[:longitude][j], customer_data[:longitude][i]], [facility_data[:latitude][j], customer_data[:latitude][i]], line=(:black))
+#             end
+#         end
+#     end
 
-    xlabel!("Longitude")
-    ylabel!("Latitude")
-    title!("Visualization of the Facilities with the Scenarios")
-    display(plt)  # This will display the plot in a GUI window
+#     xlabel!("Longitude")
+#     ylabel!("Latitude")
+#     title!("Visualization of the Facilities with the Scenarios")
+#     display(plt)  # This will display the plot in a GUI window
 
-    # Save the plot as an image file
-    savefig("facilities_map_scenarios.png")
-end
+#     # Save the plot as an image file
+#     savefig("facilities_map_scenarios.png")
+# end
 
 
-# Once you have the y_solution, you can call the plot function
-plot_facilities_scenarios(facility_data, customer_data, y)
+# # Once you have the y_solution, you can call the plot function
+# plot_facilities_scenarios(facility_data, customer_data, y)
