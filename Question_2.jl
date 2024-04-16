@@ -212,10 +212,10 @@ function plot_facilities_connections(facility_data, opened_facilities, customers
         end
     end
 
-    #= # Add data labels for facilities
-    for facility in enumerate(facility_data)
-        text(facility.longitude, facility.latitude, string(index), fontsize=8, ha="right", va="bottom")
-    end =#
+    # Add data labels for facilities
+    for i in 1:size(facility_data, 1)
+        annotate(string(facility_data.facility[i]), xy=(facility_data.longitude[i], facility_data.latitude[i]), xytext=(3,3), textcoords="offset points")
+    end
 
     # Label axes and show legend
     xlabel("Longitude")

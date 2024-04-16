@@ -2,8 +2,7 @@ using XLSX
 using DataFrames
 using JuMP
 using Gurobi
-using Plots
-using PyPlot
+
 
 
 function solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, capacity, h, S, q)
@@ -206,40 +205,34 @@ S = 30
 q = fill(1/30,1,30)
 
 y = solve_facility_location_scenario(n,m,c, f_closing_costs, f_opening_costs, facility_capacities_scenarios, customer_demands_scenarios,S,q)
+opened_facilities = [1,2,3,4,8]
+
+using PyPlot
+
+# Function to plot facilities and their connections to customers
+function plot_facilities_connections(facility_data, opened_facilities)
+    # Initialize the PyPlot figure
+    figure()
+
+    # Plot all facilities
+    scatter(facility_data.longitude, facility_data.latitude, label="Facilities", color="blue", alpha=1)
+    scatter(facility_data.longitude[opened_facilities], facility_data.latitude[opened_facilities], color="red", label="Opened Facilities", alpha=1)
 
 
+     # Add data labels for facilities
+    for (index, facility) in enumerate(facility_data.facility)
+        text(facility_data.longitude[index], facility_data.latitude[index], facility, fontsize=8, ha="left", va="bottom")
+    end
 
-# pyplot()  # This sets PyPlot as the backend for Plots
+    # Label axes and show legend
+    xlabel("Longitude")
+    ylabel("Latitude")
+    title("Visualization of Facilities")
+    legend()
 
-# function plot_facilities_scenarios(facility_data, customer_data, y)
-#     plt = plot(legend = :topleft)
+    # Save the plot as an image file
+    savefig("facilities_connections_scenarios.png")
+end
 
-#     # Plot all facilities
-#     scatter!(facility_data[:longitude], facility_data[:latitude], label="Facilities", color="red")
-
-#     # Plot open facilities
-#     opened_facilities = [1,2,3,4,8]
-#     scatter!(facility_data[:longitude][opened_facilities], facility_data[:latitude][opened_facilities], label="Opened Facilities", color="green")
-
-#     # Plot connections
-#     for i in 1:size(customer_data, 1)
-#         for j in opened_facilities
-#             # Assuming y[i,j] is your variable indicating whether customer i is assigned to facility j
-#             if value(y[i,j]) > 0.5
-#                 plot!([facility_data[:longitude][j], customer_data[:longitude][i]], [facility_data[:latitude][j], customer_data[:latitude][i]], line=(:black))
-#             end
-#         end
-#     end
-
-#     xlabel!("Longitude")
-#     ylabel!("Latitude")
-#     title!("Visualization of the Facilities with the Scenarios")
-#     display(plt)  # This will display the plot in a GUI window
-
-#     # Save the plot as an image file
-#     savefig("facilities_map_scenarios.png")
-# end
-
-
-# # Once you have the y_solution, you can call the plot function
-# plot_facilities_scenarios(facility_data, customer_data, y)
+# Example usage
+plot_facilities_connections(facility_data, opened_facilities)
