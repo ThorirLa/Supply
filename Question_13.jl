@@ -45,58 +45,87 @@ end
 
 
 
+
 function check_time_feasibility(route, times, repair_times, travel_time_matrix, max_duration_minutes)
-    total_time = 0
-    #current_time = Time(0, 0)  # start of the day for simplification
-    current_time = times.Start[times.Customer .== route[1]][1]  # Starting time of the first customer
+    # Start with the travel time from Home to the first customer
+    customer_1 = route[1]
+    initial_travel_time = travel_time_matrix[1, customer_1]  # Corrected index
+    total_time = initial_travel_time
 
-    println("Checking route: $route")
+    # Get the start and end times for the first customer
+    first_customer_start_time = times.Start[times.Customer .== customer_1][1]
+    first_customer_end_time = times.End[times.Customer .== customer_1][1]
 
+    # Include service time at the first customer's location
+    first_customer_service_time = repair_times.Service_Time_m[repair_times.Customer .== customer_1][1]
+    total_time += first_customer_service_time
+
+    # Start the service at the later of customer's start time or after travel time
+    current_time = max(first_customer_start_time, Time(0, 0) + Minute(initial_travel_time))
+    current_time += Minute(first_customer_service_time)
+
+    # Check if the service can be started and finished within the first customer's time window
+    if current_time > first_customer_end_time
+        println("Cannot service first customer $customer_1 within their time window.")
+        return false
+    end
+
+    println("Customer $customer_1: Start - $first_customer_start_time, Service Time - $first_customer_service_time, End Time - $current_time")
+
+
+
+
+    # Start the loop from the second customer since we've already handled the travel time to the first customer
     for customer_idx in 2:length(route)
         prev_customer = route[customer_idx - 1]
         customer = route[customer_idx]
         customer_start = times.Start[times.Customer .== customer][1]
         customer_end = times.End[times.Customer .== customer][1]
 
-        # Print detailed timing information
-
-
-        # Assuming travel_time_matrix contains travel times in minutes as Float64
-        travel_time_minutes = travel_time_matrix[prev_customer+1, customer+1]
-        travel_time = Minute(travel_time_minutes)  # Convert minutes to `Minute` object
+        # Retrieve travel time from the previous customer to the current one
+        travel_time_minutes = travel_time_matrix[prev_customer + 1, customer + 1]
+        travel_time = Minute(travel_time_minutes)
 
         service_time_minutes = repair_times.Service_Time_m[repair_times.Customer .== customer][1]
-        service_time = Minute(service_time_minutes)  # Convert minutes to `Minute` object
+        service_time = Minute(service_time_minutes)
 
         # Calculate earliest possible start time for this customer
         possible_start = max(current_time + travel_time, customer_start)
-        # Print detailed timing information
-        #println("Customer $customer: Start - $possible_start, End - $(possible_start + service_time), Travel Time - $travel_time, Service Time - $service_time")
-
-
-        if possible_start > customer_end
-            return false  # Cannot service this customer within their time window
-        end
-
-        # Update the current time after servicing this customer
-        current_time = possible_start + service_time
-        total_time += travel_time_minutes + service_time_minutes  # Sum up the total time in minutes
-
         
+        # Print detailed timing information
+        println("Customer $customer: Start - $possible_start, End - $(possible_start + service_time), Travel Time - $travel_time, Service Time - $service_time")
+
+        # Check if the service can be completed within the customer's time window
+        if possible_start > customer_end
+            println("Cannot service customer $customer within their time window.")
+            return false
         end
-        if total_time <= max_duration_minutes
-            println("Total route time: $total_time minutes (within limit)")
-        else
-            println("Total route time: $total_time minutes (exceeds limit!)")
-        end
-    
-        return total_time <= max_duration_minutes
+
+        # Update current_time and total_time after servicing this customer
+        current_time = possible_start + service_time
+        total_time += travel_time_minutes + service_time_minutes
     end
+
+    # Add travel time back to Home from the last customer
+    final_travel_time = travel_time_matrix[route[end] + 1, 1]  # Back to Home
+    total_time += final_travel_time
+    println("Returning to Home with final travel time: $final_travel_time minutes")
+
+    # Final check against maximum duration
+    if total_time <= max_duration_minutes
+        println("Total route time: $total_time minutes (within limit)")
+        return true
+    else
+        println("Total route time: $total_time minutes (exceeds limit!)")
+        return false
+    end
+end
 
 
 # Initialize routes with each customer as a separate route
 routes = [[i] for i in 1:nrow(times)]
 #sort!(savings, :s_ij, rev=true)  # Sort savings in descending order
+
 
 
 # Implement the Clarke-Wright algorithm with time window constraints
@@ -119,3 +148,4 @@ for (index, route) in enumerate(routes)
     println("\nRoute $index: $route")
     check_time_feasibility(route, times, repair_times, distance_matrix, 6 * 60)  # 6 hours in minutes
 end
+
