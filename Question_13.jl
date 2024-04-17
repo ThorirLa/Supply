@@ -98,10 +98,7 @@ function check_time_feasibility(route, times, repair_times, travel_time_matrix, 
         total_time += travel_time_minutes + service_time_minutes
     end
 
-    # Add travel time back to Home from the last customer
-    final_travel_time = travel_time_matrix[route[end] + 1, 1]  # Back to Home
-    total_time += final_travel_time
-    println("Returning to Home with final travel time: $final_travel_time minutes")
+   
 
     # Final check against maximum duration
     if total_time <= max_duration_minutes
