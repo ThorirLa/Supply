@@ -47,23 +47,19 @@ end
 
 
 function check_time_feasibility(route, times, repair_times, travel_time_matrix, max_duration_minutes)
-    # Start with the travel time from Home to the first customer
+    # Start by getting the time for customer 1
     customer_1 = route[1]
-    initial_travel_time = travel_time_matrix[1, customer_1]  
-    total_time = initial_travel_time
-
-    # Get the start and end times for the first customer
     first_customer_start_time = times.Start[times.Customer .== customer_1][1]
 
     # Include service time at the first customer's location
     first_customer_service_time = repair_times.Service_Time_m[repair_times.Customer .== customer_1][1]
-    total_time += first_customer_service_time
+    total_time = first_customer_service_time
 
     # Start the service at the later of customer's start time or after travel time
-    current_time = max(first_customer_start_time, Time(0, 0) + Minute(initial_travel_time))
+    current_time = max(first_customer_start_time, Time(0, 0))
     current_time += Minute(first_customer_service_time)
 
-    println("Customer $customer_1: Start - $first_customer_start_time, Service Time - $first_customer_service_time, End Time - $current_time")
+    println("Customer $customer_1: Start - $first_customer_start_time, End - $current_time, Service Time - $first_customer_service_time")
 
 
 
