@@ -47,8 +47,13 @@ end
 
 
 function check_time_feasibility(route, times, repair_times, travel_time_matrix, max_duration_minutes)
-    # Start by getting the time for customer 1
+    # Start with the travel time from Home to the first customer
     customer_1 = route[1]
+    #initial_travel_time_minutes = travel_time_matrix[1, customer_1 + 1]  # Assuming 'route' array is 1-indexed and corresponds to the matrix columns starting from the second column
+    #initial_travel_time = Minute(initial_travel_time_minutes)
+    #total_time = initial_travel_time_minutes
+    
+    # Get the start and end times for the first customer
     first_customer_start_time = times.Start[times.Customer .== customer_1][1]
 
     # Include service time at the first customer's location
@@ -56,9 +61,12 @@ function check_time_feasibility(route, times, repair_times, travel_time_matrix, 
     total_time = first_customer_service_time
 
     # Start the service at the later of customer's start time or after travel time
+    #current_time = max(first_customer_start_time, Time(0, 0) + Minute(initial_travel_time))
+    
     current_time = max(first_customer_start_time, Time(0, 0))
     current_time += Minute(first_customer_service_time)
 
+    #println("Customer $customer_1: Start - $first_customer_start_time, End - $current_time, Travel Time - $initial_travel_time, Service Time - $first_customer_service_time")
     println("Customer $customer_1: Start - $first_customer_start_time, End - $current_time, Service Time - $first_customer_service_time")
 
 
@@ -99,11 +107,12 @@ function check_time_feasibility(route, times, repair_times, travel_time_matrix, 
     # Final check against maximum duration
     if total_time <= max_duration_minutes
         println("Total route time: $total_time minutes (within limit)")
-        return true
+        return true, total_time
     else
         println("Total route time: $total_time minutes (exceeds limit!)")
-        return false
+        return false, total_time
     end
+    
 end
 
 
@@ -121,16 +130,23 @@ for row in eachrow(savings)
 
     if route_i != route_j
         merged_route = vcat(routes[route_i], routes[route_j])
-        if check_time_feasibility(merged_route, times,repair_times, distance_matrix, 6 * 60)  # 6 hours converted to minutes
+        is_feasible, route_time = check_time_feasibility(merged_route, times, repair_times, distance_matrix, 6 * 60)
+        if is_feasible
             routes[route_i] = merged_route
             deleteat!(routes, route_j)
+        else
+            println("Route not feasible. Removing route from consideration.")
         end
     end
 end
 
-println("Final route checks:")
+total_feasible_time = 0
 for (index, route) in enumerate(routes)
     println("\nRoute $index: $route")
-    check_time_feasibility(route, times, repair_times, distance_matrix, 6 * 60)  # 6 hours in minutes
+    is_feasible, route_time = check_time_feasibility(route, times, repair_times, distance_matrix, 6 * 60)  # 6 hours in minutes
+    if is_feasible
+        total_feasible_time += route_time
+    end
 end
 
+println("\nTotal feasible route time: $total_feasible_time minutes")
