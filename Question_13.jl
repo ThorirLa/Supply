@@ -107,11 +107,12 @@ function check_time_feasibility(route, times, repair_times, travel_time_matrix, 
     # Final check against maximum duration
     if total_time <= max_duration_minutes
         println("Total route time: $total_time minutes (within limit)")
-        return true, total_time
+        return true
     else
         println("Total route time: $total_time minutes (exceeds limit!)")
-        return false, total_time
+        return false
     end
+
     
 end
 
@@ -130,23 +131,15 @@ for row in eachrow(savings)
 
     if route_i != route_j
         merged_route = vcat(routes[route_i], routes[route_j])
-        is_feasible, route_time = check_time_feasibility(merged_route, times, repair_times, distance_matrix, 6 * 60)
-        if is_feasible
+        if check_time_feasibility(merged_route, times,repair_times, distance_matrix, 6 * 60)  # 6 hours converted to minutes
             routes[route_i] = merged_route
             deleteat!(routes, route_j)
-        else
-            println("Route not feasible. Removing route from consideration.")
         end
     end
 end
 
-total_feasible_time = 0
+println("Final route checks:")
 for (index, route) in enumerate(routes)
     println("\nRoute $index: $route")
-    is_feasible, route_time = check_time_feasibility(route, times, repair_times, distance_matrix, 6 * 60)  # 6 hours in minutes
-    if is_feasible
-        total_feasible_time += route_time
-    end
+    check_time_feasibility(route, times, repair_times, distance_matrix, 6 * 60)  # 6 hours in minutes
 end
-
-println("\nTotal feasible route time: $total_feasible_time minutes")
